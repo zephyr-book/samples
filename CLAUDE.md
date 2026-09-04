@@ -127,7 +127,8 @@ menu strikes them through, which is correct behaviour, not a bug.
 
 ## Contributing
 
-**Never push to `main`.** Work goes on a feature branch and through a PR:
+**`main` is branch-protected — a direct push is refused.** Work goes on a
+feature branch and through a PR:
 
 ```bash
 git checkout -b <branch>
