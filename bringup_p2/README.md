@@ -29,7 +29,7 @@ menu can tell you, so nothing is ever silently left out of the list.
 
 | Row | What it tests | How |
 | --- | --- | --- |
-| `LEDs` | `led0`…`led3` + white LED | toggle each, or all on / all off |
+| `LEDs` | `led0`…`led3` + the white LED (`LAMP` on the silkscreen) | toggle each, or all on / all off |
 | `Buttons/Enc` | 4 user buttons, encoder rotation and its button | live state, straight off the input subsystem |
 | `RGB strip` | 4× FZ2812-5050 on PIO1 | R/G/B/white/off presets, plus a chase that proves the wiring order |
 | `Buzzer` | piezo on PWM slice 8 | four tones, a sweep, and silence |

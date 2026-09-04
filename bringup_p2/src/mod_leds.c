@@ -1,6 +1,7 @@
 /**
  * @file mod_leds.c
- * @brief The four discrete LEDs plus the white one behind Q6.
+ * @brief The four discrete LEDs plus the white one behind Q6, which the
+ *        silkscreen calls LAMP.
  *
  *        led0..led3 sink current from +3V3 and are active-low; the white LED
  *        is switched by a low-side MOSFET and is active-high. Both polarities
@@ -24,10 +25,10 @@ LOG_MODULE_REGISTER(mod_leds, LOG_LEVEL_INF);
 
 #define LED_COUNT 5
 
-/* The white one is taken by node label rather than through its led4 alias:
- * "led4" says nothing about which LED it is, and this is the file someone reads
- * to find out whether the white LED is covered at all. It is the only one with
- * a MOSFET in front of it, so it is also the only active-high one -- but that
+/* The white LED is taken by its white_led node label rather than through the
+ * led4 alias: "led4" says nothing about which LED it is, and this is the file
+ * someone reads to find out whether it is covered at all. It is the only one
+ * with a MOSFET in front of it, so also the only active-high one -- but that
  * is described in the devicetree, so nothing here has to special-case it.
  */
 static const struct gpio_dt_spec leds[LED_COUNT] = {
@@ -36,7 +37,8 @@ static const struct gpio_dt_spec leds[LED_COUNT] = {
 	GPIO_DT_SPEC_GET(DT_NODELABEL(white_led), gpios),
 };
 
-static const char *const names[LED_COUNT] = {"LED0", "LED1", "LED2", "LED3", "WHITE"};
+/* Named LAMP, not WHITE, to match what is printed on the board next to it. */
+static const char *const names[LED_COUNT] = {"LED0", "LED1", "LED2", "LED3", "LAMP"};
 
 static struct oled_menu_screen screen;
 static lv_obj_t *rows[LED_COUNT];
