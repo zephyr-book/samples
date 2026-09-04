@@ -32,8 +32,24 @@ struct bringup_module {
 	 */
 	int (*create)(const struct oled_menu_screen *home);
 
-	/** @return This module's screen, valid once create() succeeded. */
+	/**
+	 * @brief This module's entry screen, valid once create() succeeded.
+	 *
+	 * Selecting the module's row shows this one. A module with a submenu
+	 * returns the submenu here and reports its sub-screens through
+	 * is_showing().
+	 */
 	const struct oled_menu_screen *(*screen)(void);
+
+	/**
+	 * @brief Whether any screen belonging to this module is on display.
+	 *
+	 * Only needed by a module that owns more than the one screen(): the
+	 * refresh below is driven off this. NULL means "just screen()".
+	 *
+	 * @return True if one of this module's screens is showing.
+	 */
+	bool (*is_showing)(void);
 
 	/**
 	 * @brief Re-read the hardware and update the widgets.

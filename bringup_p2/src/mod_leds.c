@@ -24,10 +24,16 @@ LOG_MODULE_REGISTER(mod_leds, LOG_LEVEL_INF);
 
 #define LED_COUNT 5
 
+/* The white one is taken by node label rather than through its led4 alias:
+ * "led4" says nothing about which LED it is, and this is the file someone reads
+ * to find out whether the white LED is covered at all. It is the only one with
+ * a MOSFET in front of it, so it is also the only active-high one -- but that
+ * is described in the devicetree, so nothing here has to special-case it.
+ */
 static const struct gpio_dt_spec leds[LED_COUNT] = {
-	GPIO_DT_SPEC_GET(DT_ALIAS(led0), gpios), GPIO_DT_SPEC_GET(DT_ALIAS(led1), gpios),
-	GPIO_DT_SPEC_GET(DT_ALIAS(led2), gpios), GPIO_DT_SPEC_GET(DT_ALIAS(led3), gpios),
-	GPIO_DT_SPEC_GET(DT_ALIAS(led4), gpios),
+	GPIO_DT_SPEC_GET(DT_ALIAS(led0), gpios),          GPIO_DT_SPEC_GET(DT_ALIAS(led1), gpios),
+	GPIO_DT_SPEC_GET(DT_ALIAS(led2), gpios),          GPIO_DT_SPEC_GET(DT_ALIAS(led3), gpios),
+	GPIO_DT_SPEC_GET(DT_NODELABEL(white_led), gpios),
 };
 
 static const char *const names[LED_COUNT] = {"LED0", "LED1", "LED2", "LED3", "WHITE"};

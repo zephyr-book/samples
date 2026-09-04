@@ -62,7 +62,11 @@ static void refresh_timer_cb(lv_timer_t *timer)
 			continue;
 		}
 
-		if (oled_menu_is_active(modules[i]->screen())) {
+		/* A module with a submenu knows which of its screens is up;
+		 * everything else is just its one screen.
+		 */
+		if (modules[i]->is_showing != NULL ? modules[i]->is_showing()
+						   : oled_menu_is_active(modules[i]->screen())) {
 			modules[i]->refresh();
 			return;
 		}

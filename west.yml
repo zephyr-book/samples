@@ -41,6 +41,13 @@ manifest:
                                   # the board's zbook-wifi-credentials-littlefs
                                   # snippet).
                                   - littlefs
+                                  # FatFs is not optional even for an app that
+                                  # never touches the microSD: the board's
+                                  # own defconfig sets CONFIG_FILE_SYSTEM and
+                                  # CONFIG_FAT_FILESYSTEM_ELM, so the zephyr
+                                  # tree compiles subsys/fs/fat_fs.c and needs
+                                  # this module's ff.h.
+                                  - fatfs
 
                 # ZBook board support, shipped as a Zephyr module: it registers
                 # board_root/dts_root/snippet_root via zephyr/module.yml, so
