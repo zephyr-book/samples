@@ -17,6 +17,7 @@
 
 #include <errno.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/gpio.h>
@@ -37,6 +38,15 @@ static const char *const names[SENSE_COUNT] = {"HALL", "ALRT", "SDCD"};
 static struct oled_menu_screen screen;
 static lv_obj_t *rows[SENSE_COUNT];
 
+/* Transitions seen while this screen has been up. A magnet swiped past the
+ * hall sensor is over in well under a second, so the count is what makes it
+ * testable: swipe, then read how many times the line moved. Polling at the
+ * refresh rate is plenty for that -- and the TMAG5213's output can latch, so
+ * the level alone may not return on its own.
+ */
+static uint32_t changes[SENSE_COUNT];
+static int last[SENSE_COUNT];
+
 static void refresh(void)
 {
 	for (size_t i = 0; i < SENSE_COUNT; i++) {
@@ -53,10 +63,25 @@ static void refresh(void)
 			continue;
 		}
 
+		if (last[i] >= 0 && value != last[i]) {
+			changes[i]++;
+		}
+		last[i] = value;
+
 		/* Logical, not electrical: the devicetree already accounts for
 		 * the active-low wiring.
 		 */
-		lv_label_set_text_fmt(rows[i], "%-4s %s", names[i], value ? "ACTIVE" : "idle");
+		lv_label_set_text_fmt(rows[i], "%-4s %-6s n=%u", names[i],
+				      value ? "ACTIVE" : "idle", (unsigned int)changes[i]);
+	}
+}
+
+static void on_reset(lv_event_t *event)
+{
+	ARG_UNUSED(event);
+
+	for (size_t i = 0; i < SENSE_COUNT; i++) {
+		changes[i] = 0;
 	}
 }
 
@@ -69,6 +94,8 @@ static int create(const struct oled_menu_screen *home)
 	}
 
 	for (size_t i = 0; i < SENSE_COUNT; i++) {
+		last[i] = -1;
+
 		if (gpio_is_ready_dt(&lines[i])) {
 			ret = gpio_pin_configure_dt(&lines[i], GPIO_INPUT);
 			if (ret < 0) {
@@ -81,6 +108,7 @@ static int create(const struct oled_menu_screen *home)
 		rows[i] = oled_menu_label_add(&screen, names[i]);
 	}
 
+	oled_menu_row_add(&screen, "Reset counts", on_reset, NULL);
 	oled_menu_back_row_add(&screen, home);
 
 	return 0;

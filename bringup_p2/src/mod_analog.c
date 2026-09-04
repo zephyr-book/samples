@@ -31,6 +31,13 @@ LOG_MODULE_REGISTER(mod_analog, LOG_LEVEL_INF);
 
 static const struct device *const adc = DEVICE_DT_GET(DT_NODELABEL(adc));
 
+/* Samples taken per refresh for an input read as a waveform rather than a
+ * level. 128 reads take a couple of milliseconds, which is short enough to sit
+ * inside the LVGL timer callback and long enough to catch a few cycles of
+ * anything audible.
+ */
+#define BURST_SAMPLES 128
+
 /** One analog input and the widgets showing it. */
 struct analog_input {
 	/** Submenu row text. Up to OLED_MENU_COLUMNS characters. */
@@ -39,6 +46,15 @@ struct analog_input {
 	const char *title;
 	/** The ADC channel, straight from the devicetree. */
 	const struct adc_channel_cfg channel;
+	/** Full-scale value for the bar. */
+	int32_t bar_max;
+	/**
+	 * @brief Report peak-to-peak over a burst instead of a single level.
+	 *
+	 * A microphone is an AC signal: one reading every refresh says nothing
+	 * about it, however often it is taken.
+	 */
+	bool waveform;
 	struct oled_menu_screen screen;
 	lv_obj_t *value;
 	lv_obj_t *bar;
@@ -50,16 +66,21 @@ static struct analog_input inputs[] = {
 		.label = "Potentiometer",
 		.title = "Pot",
 		.channel = ADC_CHANNEL_CFG_DT(DT_NODELABEL(potentiometer)),
+		.bar_max = FULL_SCALE,
 	},
 	{
 		.label = "LDR (light)",
 		.title = "LDR",
 		.channel = ADC_CHANNEL_CFG_DT(DT_NODELABEL(ldr_adc)),
+		.bar_max = FULL_SCALE,
 	},
 	{
 		.label = "Microphone",
 		.title = "Mic",
 		.channel = ADC_CHANNEL_CFG_DT(DT_NODELABEL(microphone_adc)),
+		/* Peak-to-peak, not absolute level, so a much smaller span. */
+		.bar_max = 1024,
+		.waveform = true,
 	},
 };
 
@@ -74,6 +95,10 @@ static void input_refresh(struct analog_input *input)
 {
 	int ret;
 	uint16_t sample = 0;
+	uint16_t lowest = UINT16_MAX;
+	uint16_t highest = 0;
+	uint32_t total = 0;
+	uint16_t count = input->waveform ? BURST_SAMPLES : 1U;
 	struct adc_sequence sequence = {
 		.buffer = &sample,
 		.buffer_size = sizeof(sample),
@@ -86,9 +111,28 @@ static void input_refresh(struct analog_input *input)
 		return;
 	}
 
-	ret = adc_read(adc, &sequence);
-	if (ret < 0) {
-		lv_label_set_text_fmt(input->value, "error %d", ret);
+	for (uint16_t i = 0; i < count; i++) {
+		ret = adc_read(adc, &sequence);
+		if (ret < 0) {
+			lv_label_set_text_fmt(input->value, "error %d", ret);
+			return;
+		}
+
+		lowest = MIN(lowest, sample);
+		highest = MAX(highest, sample);
+		total += sample;
+	}
+
+	if (input->waveform) {
+		/* Peak-to-peak is the figure that moves when there is sound;
+		 * the mean is shown too because it says where the input is
+		 * sitting, which is the first thing to check if pp stays at 0.
+		 */
+		lv_label_set_text_fmt(input->value, "pp   %u\nmean %u\nmin %u max %u",
+				      (unsigned int)(highest - lowest),
+				      (unsigned int)(total / count), (unsigned int)lowest,
+				      (unsigned int)highest);
+		lv_bar_set_value(input->bar, highest - lowest, LV_ANIM_OFF);
 		return;
 	}
 
@@ -143,7 +187,7 @@ static int create(const struct oled_menu_screen *home)
 
 		input->value = oled_menu_label_add(&input->screen, "--");
 		lv_obj_set_style_pad_bottom(input->value, 3, LV_PART_MAIN);
-		input->bar = oled_menu_bar_add(&input->screen, 0, FULL_SCALE);
+		input->bar = oled_menu_bar_add(&input->screen, 0, input->bar_max);
 		oled_menu_back_row_add(&input->screen, &submenu);
 
 		oled_menu_row_add(&submenu, input->label, on_open_input, input);
