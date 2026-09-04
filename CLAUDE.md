@@ -125,6 +125,24 @@ Do not spend time re-diagnosing these from software:
 `TMP1075` and `BMI323` are simply **not populated** on the current board; the
 menu strikes them through, which is correct behaviour, not a bug.
 
+## Contributing
+
+**Never push to `main`.** Work goes on a feature branch and through a PR:
+
+```bash
+git checkout -b <branch>
+git push -u origin <branch>
+gh pr create --base main
+```
+
+This repo is a west project, so it is normally checked out detached at the
+manifest revision — the `checkout -b` is what gives you a branch to commit on.
+Be aware that leaving the worktree on a branch means a later `west update`
+checks `main` back out and takes un-merged work with it.
+
+The same applies to the `zbook` board module. Do not put AI or tool
+attribution in commit messages or PR bodies.
+
 ## C code style
 
 `.clang-format` is Zephyr upstream: LLVM base, **tabs**, 8-wide indent,
