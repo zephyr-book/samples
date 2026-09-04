@@ -1,0 +1,25 @@
+/**
+ * @file app.overlay
+ * @brief Wires the ZBook P2 rotary encoder into LVGL.
+ *
+ *        The board describes the encoder as two independent Zephyr input
+ *        devices -- `encoder_qdec` (gpio-qdec, emits INPUT_REL_WHEEL) and
+ *        `enc_button` (gpio-keys, emits INPUT_KEY_ENTER). LVGL wants a single
+ *        encoder indev, so this pseudo-device merges them: with no `input`
+ *        phandle it subscribes to every input device in the system and keeps
+ *        the two codes below, ignoring the rest (the four user buttons).
+ *
+ *        P2 only -- the P1 revision has no encoder.
+ *
+ * @copyright Copyright (c) Centro de Inovacao EDGE
+ */
+
+#include <zephyr/dt-bindings/input/input-event-codes.h>
+
+/ {
+	lvgl_encoder_input {
+		compatible = "zephyr,lvgl-encoder-input";
+		rotation-input-code = <INPUT_REL_WHEEL>;
+		button-input-code = <INPUT_KEY_ENTER>;
+	};
+};

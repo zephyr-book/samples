@@ -1,0 +1,39 @@
+# Application options for the ZBook P2 bring-up menu.
+#
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) Centro de Inovacao EDGE
+
+mainmenu "ZBook P2 bring-up"
+
+config BRINGUP_SNTP_SERVER
+	string "SNTP server used to set the clock"
+	default "pool.ntp.org"
+	help
+	  Queried once the device comes online, and periodically after that.
+	  Resolved by name, so the build needs DNS_RESOLVER (the zbook_wifi
+	  shield turns it on).
+
+config BRINGUP_SNTP_TIMEOUT_MS
+	int "How long to wait for an SNTP reply"
+	default 8000
+	help
+	  A failed query is retried on a shorter interval than a successful one.
+
+config BRINGUP_SNTP_RESYNC_MINUTES
+	int "Minutes between successful re-syncs"
+	default 60
+	help
+	  This board has no RTC, so the wall clock is the kernel uptime plus an
+	  offset and drifts with the system clock. Re-syncing hourly keeps the
+	  displayed minute honest.
+
+config BRINGUP_UTC_OFFSET_MINUTES
+	int "Minutes to add to UTC for the displayed clock"
+	default -180
+	help
+	  SNTP reports UTC. There is no timezone database here, so the title bar
+	  clock just adds this fixed offset. The default is -180, i.e. UTC-3
+	  (Brasilia, which has had no DST since 2019). Change it for your
+	  location.
+
+source "Kconfig.zephyr"

@@ -1,0 +1,54 @@
+# West manifest for the ZBook sample applications (T2 topology: this repo is
+# both the manifest and the applications).
+#
+#   west init -m git@github.com:zephyr-book/samples.git zbook-samples
+#   cd zbook-samples && west update
+#
+# Everything west manages lands under deps/, except the board module, which is
+# a sibling of this repo at the workspace root.
+#
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) Centro de Inovacao EDGE
+
+manifest:
+        remotes:
+                - name: zephyrproject
+                  url-base: https://github.com/zephyrproject-rtos
+                - name: zephyr-book
+                  url-base: https://github.com/zephyr-book
+
+        projects:
+                - name: zephyr
+                  remote: zephyrproject
+                  revision: v4.4.2
+                  clone-depth: 1
+                  # path-prefix below also prepends to this project's own path,
+                  # so `path: zephyr` resolves to deps/zephyr.
+                  path: zephyr
+                  import:
+                          path-prefix: deps/
+                          # Only what the samples actually build against --
+                          # importing all of Zephyr's modules costs several GB.
+                          name-allowlist:
+                                  # RP2350B SoC support and its CMSIS headers.
+                                  - hal_rpi_pico
+                                  - cmsis_6
+                                  # LVGL: the zephyr tree carries only the glue
+                                  # layer, the library itself is this module.
+                                  - lvgl
+                                  # LittleFS backs the persisted Wi-Fi
+                                  # credentials (see bringup_p2/wifi.conf and
+                                  # the board's zbook-wifi-credentials-littlefs
+                                  # snippet).
+                                  - littlefs
+
+                # ZBook board support, shipped as a Zephyr module: it registers
+                # board_root/dts_root/snippet_root via zephyr/module.yml, so
+                # `-b zbook@p2/rp2350b/m33` is auto-discovered with no
+                # BOARD_ROOT on the command line.
+                - name: zbook
+                  remote: zephyr-book
+                  revision: main
+
+        self:
+                path: samples
